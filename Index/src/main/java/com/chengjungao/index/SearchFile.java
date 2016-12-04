@@ -1,10 +1,11 @@
 package com.chengjungao.index;
 
 import java.io.File;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ServiceLoader;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -18,6 +19,8 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 
+import com.chengjungao.analyzer.ProvideAnalyzer;
+
 public class SearchFile {
 	
 	static final String fields[] = { "name","extName"};;  
@@ -26,7 +29,13 @@ public class SearchFile {
 	
 	
 	public static void main(String[] args) throws Exception {
-		Analyzer analyzer= new SimpleAnalyzer();
+	   Analyzer analyzer = null;
+	   ServiceLoader<ProvideAnalyzer> serviceLoader = ServiceLoader.load(ProvideAnalyzer.class);
+	   Iterator<ProvideAnalyzer> provideAnalyzers = serviceLoader.iterator();  
+       if (provideAnalyzers.hasNext()) {  
+        	ProvideAnalyzer provideAnalyzer = provideAnalyzers.next();  
+        	analyzer =  provideAnalyzer.Provide();
+        }  
 		File indexDirFile = new File(WriteIndex.indexDir);
 		Directory directory2 = new NIOFSDirectory(indexDirFile);
 		IndexReader reader = DirectoryReader.open(directory2);

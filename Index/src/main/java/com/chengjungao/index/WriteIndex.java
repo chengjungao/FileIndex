@@ -2,10 +2,11 @@ package com.chengjungao.index;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ServiceLoader;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.StringField;
@@ -17,6 +18,8 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.util.Version;
 
+import com.chengjungao.analyzer.ProvideAnalyzer;
+
 public class WriteIndex {
    static final String indexDir = "D:\\lucene";
    
@@ -25,17 +28,26 @@ public class WriteIndex {
 	   File indexDirFile = new File(indexDir);
 	   if (deleteDir(indexDirFile) & indexDirFile.mkdirs()) {
 			  Directory directory2 = new NIOFSDirectory(indexDirFile);
-			  Analyzer analyzer= new SimpleAnalyzer();
-			  
+			  //使用spi 获得analyze的实现
+			  Analyzer analyzer = null;
+			  ServiceLoader<ProvideAnalyzer> serviceLoader = ServiceLoader.load(ProvideAnalyzer.class);
+			  Iterator<ProvideAnalyzer> provideAnalyzers = serviceLoader.iterator();  
+		        if (provideAnalyzers.hasNext()) {  
+		        	ProvideAnalyzer provideAnalyzer = provideAnalyzers.next();  
+		        	analyzer =  provideAnalyzer.Provide();
+		        }  
 			  IndexWriterConfig conf = new IndexWriterConfig(Version.LUCENE_4_10_2,analyzer);
 			  IndexWriter indexWriter = new IndexWriter(directory2, conf);
-			  File RootFile = new File("D:\\");
+		      File[] RootFiles = File.listRoots();
 			  List<FileInfo> files = new ArrayList<>();
-			  getFiles(RootFile, files);
+			  for (File RootFile : RootFiles) {
+				  getFiles(RootFile, files);
+			 }
 			  for (FileInfo fileinfo : files) {
 				  WriteLucene(indexWriter, fileinfo);
-			   }
+			   } 
 			  indexWriter.commit();
+			  
 		}
    }
    
